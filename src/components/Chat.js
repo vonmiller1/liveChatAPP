@@ -7,14 +7,16 @@ export default class Chat extends React.Component {
   state = {
     messages: [],
   };
-  componentWillMount() {
 
-  }
   render() {
     return (
       <GiftedChat
         messages={this.state.messages}
+        keyboardShouldPersistTaps='handled'
         onSend={(message) => {
+          if (!Backend.getUid()) {
+            return;
+          }
           Backend.sendMessage(message);
         }}
         user={{
@@ -24,6 +26,7 @@ export default class Chat extends React.Component {
       />
     );
   }
+
   componentDidMount() {
     Backend.loadMessages((message) => {
       this.setState((previousState) => {
@@ -33,6 +36,7 @@ export default class Chat extends React.Component {
       });
     });
   }
+
   componentWillUnmount() {
     Backend.closeChat();
   }
