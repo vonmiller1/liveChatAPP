@@ -1,7 +1,12 @@
 {
   "name": "ChatApp",
   "version": "0.0.1",
+  "description": "React Native group chat demo with Firebase Realtime Database",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vonmiller1/liveChatAPP.git"
+  },
   "scripts": {
     "start": "node node_modules/react-native/local-cli/cli.js start",
     "test": "jest"
