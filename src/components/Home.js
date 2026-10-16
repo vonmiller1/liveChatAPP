@@ -13,7 +13,19 @@ export default class Home extends React.Component {
   state = {
     name: '',
   };
+
+  handleNext = () => {
+    const name = this.state.name.trim();
+    if (!name) {
+      return;
+    }
+    Actions.chat({ name });
+  };
+
   render() {
+    const trimmedName = this.state.name.trim();
+    const canContinue = trimmedName.length > 0;
+
     return (
       <View style={styles.container}>
         <Text style={[styles.label, {marginTop: 40}]}>
@@ -22,21 +34,22 @@ export default class Home extends React.Component {
         <TextInput
           placeholder='John Smith'
           style={styles.textInput}
+          autoCapitalize='words'
+          autoCorrect={false}
+          maxLength={64}
+          returnKeyType='done'
+          onSubmitEditing={this.handleNext}
           onChangeText={(text) => {
-            this.setState({
-              name: text,
-            });
+            this.setState({ name: text });
           }}
           value={this.state.name}
         />
         <TouchableOpacity
-          onPress={() => {
-            Actions.chat({
-              name: this.state.name,
-            });
-          }}
+          disabled={!canContinue}
+          onPress={this.handleNext}
+          style={!canContinue ? styles.buttonDisabled : null}
         >
-          <Text style={styles.label}>
+          <Text style={[styles.label, !canContinue && styles.labelDisabled]}>
             Next
           </Text>
         </TouchableOpacity>
@@ -53,8 +66,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginLeft: 15,
   },
+  labelDisabled: {
+    opacity: 0.4,
+  },
   textInput: {
     height: 40,
     marginLeft: 15,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });
