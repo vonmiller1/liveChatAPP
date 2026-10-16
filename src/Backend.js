@@ -3,14 +3,17 @@ import firebase from 'firebase';
 class Backend {
   uid = '';
   messagesRef = null;
-  // initialize Firebase Backend
+  onReceive = null;
+
   constructor() {
-    firebase.initializeApp({
-      apiKey: 'AIzaSyAiuvZgc9iLMezprc5zYLBw9PsrgRkXjrE',
-      authDomain: 'meetupchat-dbce1.firebaseapp.com',
-      databaseURL: 'https://meetupchat-dbce1.firebaseio.com',
-      storageBucket: 'meetupchat-dbce1.appspot.com',
-    });
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: 'AIzaSyAiuvZgc9iLMezprc5zYLBw9PsrgRkXjrE',
+        authDomain: 'meetupchat-dbce1.firebaseapp.com',
+        databaseURL: 'https://meetupchat-dbce1.firebaseio.com',
+        storageBucket: 'meetupchat-dbce1.appspot.com',
+      });
+    }
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         this.setUid(user.uid);
@@ -21,18 +24,23 @@ class Backend {
       }
     });
   }
+
   setUid(value) {
     this.uid = value;
   }
+
   getUid() {
     return this.uid;
   }
-  // retrieve the messages from the Backend
+
   loadMessages(callback) {
+    this.closeChat();
     this.messagesRef = firebase.database().ref('messages');
-    this.messagesRef.off();
-    const onReceive = (data) => {
+    this.onReceive = (data) => {
       const message = data.val();
+      if (!message || typeof message.text !== 'string' || !message.text.trim()) {
+        return;
+      }
       callback({
         _id: data.key,
         text: message.text,
@@ -43,23 +51,31 @@ class Backend {
         },
       });
     };
-    this.messagesRef.limitToLast(20).on('child_added', onReceive);
+    this.messagesRef.limitToLast(20).on('child_added', this.onReceive);
   }
-  // send the message to the Backend
+
   sendMessage(message) {
+    if (!this.messagesRef || !message || !message.length) {
+      return;
+    }
     for (let i = 0; i < message.length; i++) {
+      const text = (message[i].text || '').trim();
+      if (!text) {
+        continue;
+      }
       this.messagesRef.push({
-        text: message[i].text,
+        text,
         user: message[i].user,
         createdAt: firebase.database.ServerValue.TIMESTAMP,
       });
     }
   }
-  // close the connection to the Backend
+
   closeChat() {
-    if (this.messagesRef) {
-      this.messagesRef.off();
+    if (this.messagesRef && this.onReceive) {
+      this.messagesRef.off('child_added', this.onReceive);
     }
+    this.onReceive = null;
   }
 }
 
